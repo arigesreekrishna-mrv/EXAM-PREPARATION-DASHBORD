@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Preparation Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar and transition utilities */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 font-sans antialiased overflow-hidden">
+
+    <div id="app" class="flex h-full w-full">
+        
+        <!-- Mobile Sidebar Backdrop -->
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-40 hidden md:hidden transition-opacity"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-xl">
+            <div class="p-6 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="h-10 w-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white tracking-wide">GradPulse</h1>
+                        <span class="text-xs text-slate-400">Exam Prep Studio</span>
+                    </div>
+                </div>
+                <button id="sidebar-close" class="md:hidden text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all bg-brand-600 text-white shadow-md shadow-brand-600/20">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('topics')" id="nav-topics" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all text-slate-400 hover:bg-slate-800/60 hover:text-white">
+                    <i class="fa-solid fa-book-open w-5 text-center"></i>
+                    <span>Study Topics</span>
+                </button>
+                <button onclick="switchTab('tests')" id="nav-tests" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all text-slate-400 hover:bg-slate-800/60 hover:text-white">
+                    <i class="fa-solid fa-clipboard-question w-5 text-center"></i>
+                    <span>Test Center</span>
+                </button>
+                <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all text-slate-400 hover:bg-slate-800/60 hover:text-white">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i>
+                    <span>Analytics</span>
+                </button>
+            </nav>
+
+            <!-- User Profile Widget -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/40">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <img src="https://placehold.co/40x40/6366f1/ffffff?text=AS" alt="Avatar" class="h-10 w-10 rounded-full ring-2 ring-brand-500/50">
+                        <div>
+                            <h4 class="text-sm font-semibold text-white">Alex Student</h4>
+                            <span class="text-xs text-emerald-400 flex items-center gap-1">
+                                <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Prep
+                            </span>
+                        </div>
+                    </div>
+                    <button onclick="resetAppData()" title="Reset Data" class="text-slate-400 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-slate-800">
+                        <i class="fa-solid fa-rotate-right text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden">
+            
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shrink-0">
+                <div class="flex items-center space-x-4">
+                    <button id="sidebar-toggle" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 id="current-page-title" class="text-lg font-bold text-slate-800">Dashboard Overview</h2>
+                        <p class="text-xs text-slate-500 hidden sm:block">Track your exam milestones and topic mastery in real-time.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <div class="relative hidden sm:block">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                        </span>
+                        <input type="text" id="global-search" placeholder="Search topics or tests..." class="w-64 pl-9 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                    </div>
+                    <button onclick="openAddTestModal()" class="flex items-center space-x-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md shadow-brand-600/20 transition-all">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Log Score</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Viewport Scrollable Area -->
+            <main id="main-scroll" class="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-50">
+                
+                <section id="tab-dashboard" class="space-y-6">
+                    <!-- Metrics Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Topics Completed</p>
+                                <h3 id="stat-topics" class="text-2xl font-bold text-slate-800 mt-1">0 / 0</h3>
+                                <span id="stat-topics-sub" class="text-xs text-emerald-600 font-medium mt-1 inline-block">0% mastery</span>
+                            </div>
+                            <div class="h-12 w-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Test Score</p>
+                                <h3 id="stat-avg-score" class="text-2xl font-bold text-slate-800 mt-1">0%</h3>
+                                <span class="text-xs text-emerald-600 font-medium mt-1 inline-block">Based on logged tests</span>
+                            </div>
+                            <div class="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tests Logged</p>
+                                <h3 id="stat-tests-count" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                                <span class="text-xs text-indigo-600 font-medium mt-1 inline-block">Exams evaluated</span>
+                            </div>
+                            <div class="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-file-lines"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Study Streak</p>
+                                <h3 class="text-2xl font-bold text-slate-800 mt-1">5 Days</h3>
+                                <span class="text-xs text-purple-600 font-medium mt-1 inline-block">🔥 Keep it up!</span>
+                            </div>
+                            <div class="h-12 w-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-fire"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subject Progress Breakdown & Recent Scores -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Subject Progress Bars -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="font-bold text-slate-800">Subject-wise Mastery</h3>
+                                <button onclick="switchTab('topics')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Manage Topics →</button>
+                            </div>
+                            <div id="dashboard-subject-progress" class="space-y-5">
+                                <!-- Dynamically injected -->
+                            </div>
+                        </div>
+
+                        <!-- Quick Upcoming Tests / Reminders -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-800 mb-4">Upcoming Milestone Exams</h3>
+                                <div class="space-y-3">
+                                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center space-x-3">
+                                        <div class="h-10 w-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                            15 <span class="text-[10px] block">OCT</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="text-sm font-semibold text-slate-800 truncate">Advanced Calculus Midterm</h4>
+                                            <p class="text-xs text-slate-500">Mathematics • 45 Questions</p>
+                                        </div>
+                                    </div>
+                                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center space-x-3">
+                                        <div class="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                            22 <span class="text-[10px] block">OCT</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="text-sm font-semibold text-slate-800 truncate">Quantum Physics Final</h4>
+                                            <p class="text-xs text-slate-500">Physics • 60 Questions</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-slate-100">
+                                <div class="p-3 bg-brand-50 rounded-xl flex items-center space-x-3">
+                                    <i class="fa-solid fa-lightbulb text-brand-600 text-lg"></i>
+                                    <p class="text-xs text-brand-900 font-medium">Tip: Review weak topics in Physics before logging your next score!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Test Scores Table -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800">Recent Test Performance</h3>
+                            <button onclick="switchTab('tests')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View All Scores →</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase">
+                                        <th class="pb-3 px-4">Test Title</th>
+                                        <th class="pb-3 px-4">Subject</th>
+                                        <th class="pb-3 px-4">Marks Obtained</th>
+                                        <th class="pb-3 px-4">Percentage</th>
+                                        <th class="pb-3 px-4">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-recent-scores" class="text-sm divide-y divide-slate-100">
+                                    <!-- Dynamically injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-topics" class="space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Curriculum & Topic Tracker</h3>
+                            <p class="text-xs text-slate-500">Expand subjects to check off completed topics and track your learning progress.</p>
+                        </div>
+                        <button onclick="openAddTopicModal()" class="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md transition-all">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Add Custom Topic</span>
+                        </button>
+                    </div>
+
+                    <!-- Subject Accordion Container -->
+                    <div id="topics-container" class="space-y-4">
+                        <!-- Dynamically injected -->
+                    </div>
+                </section>
+
+                <section id="tab-tests" class="space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Test Center & Performance History</h3>
+                            <p class="text-xs text-slate-500">Log new exam scores and analyze historical trends.</p>
+                        </div>
+                        <button onclick="openAddTestModal()" class="flex items-center space-x-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-md shadow-brand-600/20 transition-all">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Log New Test Score</span>
+                        </button>
+                    </div>
+
+                    <!-- Scores Data Table -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase">
+                                        <th class="pb-3 px-4">Test Title</th>
+                                        <th class="pb-3 px-4">Subject</th>
+                                        <th class="pb-3 px-4">Score</th>
+                                        <th class="pb-3 px-4">Percentage</th>
+                                        <th class="pb-3 px-4">Grade</th>
+                                        <th class="pb-3 px-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="full-scores-table" class="text-sm divide-y divide-slate-100">
+                                    <!-- Dynamically injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-analytics" class="space-y-6 hidden">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Advanced Analytics & Readiness</h3>
+                        <p class="text-xs text-slate-500">Detailed insights into your exam preparation efficiency.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Readiness Gauge Card -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+                            <h4 class="font-bold text-slate-800 mb-2">Overall Exam Readiness</h4>
+                            <p class="text-xs text-slate-500 mb-6">Calculated from completed topics and average test percentages.</p>
+                            
+                            <div class="relative h-44 w-44 flex items-center justify-center">
+                                <svg class="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
+                                    <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path id="analytics-ring" class="text-brand-600 transition-all duration-1000 ease-out" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span id="analytics-readiness-val" class="text-3xl font-extrabold text-slate-800">0%</span>
+                                    <span class="text-xs font-medium text-emerald-600">On Track</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Breakdown Summary -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h4 class="font-bold text-slate-800 mb-4">Performance Insights</h4>
+                                <div class="space-y-4">
+                                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start space-x-3">
+                                        <div class="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                                            <i class="fa-solid fa-arrow-trend-up text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="text-sm font-semibold text-slate-800">Strongest Subject</h5>
+                                            <p id="insight-strongest" class="text-xs text-slate-600 mt-0.5">Calculated based on average test scores.</p>
+                                        </div>
+                                    </div>
+                                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start space-x-3">
+                                        <div class="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                                            <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="text-sm font-semibold text-slate-800">Area for Improvement</h5>
+                                            <p id="insight-improvement" class="text-xs text-slate-600 mt-0.5">Focus more practice tests here.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-slate-100">
+                                <button onclick="switchTab('topics')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition-all">
+                                    Review Weak Topics Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Log Test Score Modal -->
+    <div id="modal-test" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Log Test Score</h3>
+                <button onclick="closeModal('modal-test')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-test" onsubmit="handleTestSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Test Title</label>
+                    <input type="text" id="test-title" required placeholder="e.g., Physics Quiz 3" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Subject</label>
+                    <select id="test-subject" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                        <!-- Injected -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Marks Obtained</label>
+                        <input type="number" id="test-obtained" required min="0" placeholder="85" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Total Marks</label>
+                        <input type="number" id="test-total" required min="1" value="100" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                </div>
+                <div class="pt-4 flex space-x-3">
+                    <button type="button" onclick="closeModal('modal-test')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium shadow-md shadow-brand-600/20 transition-all">Save Score</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Topic Modal -->
+    <div id="modal-topic" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Add Custom Topic</h3>
+                <button onclick="closeModal('modal-topic')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-topic" onsubmit="handleTopicSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Subject</label>
+                    <select id="topic-subject-select" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                        <!-- Injected -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Topic Title</label>
+                    <input type="text" id="topic-title" required placeholder="e.g., Electromagnetic Induction" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+                <div class="pt-4 flex space-x-3">
+                    <button type="button" onclick="closeModal('modal-topic')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium shadow-md transition-all">Add Topic</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initial Mock Data Structure
+        const defaultData = {
+            subjects: [
+                {
+                    id: 'sub-1',
+                    name: 'Mathematics',
+                    code: 'MATH',
+                    color: 'bg-blue-500',
+                    topics: [
+                        { id: 'top-1', title: 'Limits and Continuity', completed: true },
+                        { id: 'top-2', title: 'Derivatives & Applications', completed: true },
+                        { id: 'top-3', title: 'Integration Techniques', completed: false },
+                        { id: 'top-4', title: 'Differential Equations', completed: false }
+                    ]
+                },
+                {
+                    id: 'sub-2',
+                    name: 'Physics',
+                    code: 'PHYS',
+                    color: 'bg-purple-500',
+                    topics: [
+                        { id: 'top-5', title: 'Kinematics in 2D', completed: true },
+                        { id: 'top-6', title: 'Newton’s Laws of Motion', completed: false },
+                        { id: 'top-7', title: 'Work, Energy, and Power', completed: false },
+                        { id: 'top-8', title: 'Electromagnetism', completed: false }
+                    ]
+                },
+                {
+                    id: 'sub-3',
+                    name: 'Computer Science',
+                    code: 'CS',
+                    color: 'bg-emerald-500',
+                    topics: [
+                        { id: 'top-9', title: 'Data Structures & Arrays', completed: true },
+                        { id: 'top-10', title: 'Sorting & Searching Algorithms', completed: true },
+                        { id: 'top-11', title: 'Object-Oriented Programming', completed: true },
+                        { id: 'top-12', title: 'Database Normalization', completed: false }
+                    ]
+                }
+            ],
+            scores: [
+                { id: 'score-1', title: 'Math Quiz 1', subjectId: 'sub-1', obtained: 42, total: 50, date: '2026-10-01' },
+                { id: 'score-2', title: 'Physics Mid-Unit', subjectId: 'sub-2', obtained: 38, total: 50, date: '2026-10-05' },
+                { id: 'score-3', title: 'Algorithm Assessment', subjectId: 'sub-3', obtained: 92, total: 100, date: '2026-10-08' }
+            ]
+        };
+
+        // Load State from LocalStorage
+        let appState = JSON.parse(localStorage.getItem('grad_pulse_state')) || defaultData;
+
+        function saveState() {
+            localStorage.setItem('grad_pulse_state', JSON.stringify(appState));
+            renderApp();
+        }
+
+        function resetAppData() {
+            if (confirm('Are you sure you want to reset all progress to default data?')) {
+                appState = JSON.parse(JSON.stringify(defaultData));
+                saveState();
+            }
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            const tabs = ['dashboard', 'topics', 'tests', 'analytics'];
+            tabs.forEach(t => {
+                const section = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    section.classList.remove('hidden');
+                    btn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all bg-brand-600 text-white shadow-md shadow-brand-600/20";
+                } else {
+                    section.classList.add('hidden');
+                    btn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all text-slate-400 hover:bg-slate-800/60 hover:text-white";
+                }
+            });
+
+            // Update Header Title
+            const titles = {
+                dashboard: 'Dashboard Overview',
+                topics: 'Curriculum & Topic Tracker',
+                tests: 'Test Center & Performance History',
+                analytics: 'Advanced Analytics & Readiness'
+            };
+            document.getElementById('current-page-title').innerText = titles[tabId];
+
+            // Close mobile sidebar if open
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.add('hidden');
+        }
+
+        // Toggle Topic Completion
+        function toggleTopic(topicId) {
+            appState.subjects.forEach(sub => {
+                sub.topics.forEach(top => {
+                    if (top.id === topicId) {
+                        top.completed = !top.completed;
+                    }
+                });
+            });
+            saveState();
+        }
+
+        // Modal Controls
+        function openAddTestModal() {
+            const select = document.getElementById('test-subject');
+            select.innerHTML = appState.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            document.getElementById('modal-test').classList.remove('hidden');
+        }
+
+        function openAddTopicModal() {
+            const select = document.getElementById('topic-subject-select');
+            select.innerHTML = appState.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            document.getElementById('modal-topic').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Handle Test Form Submit
+        function handleTestSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('test-title').value;
+            const subjectId = document.getElementById('test-subject').value;
+            const obtained = parseFloat(document.getElementById('test-obtained').value);
+            const total = parseFloat(document.getElementById('test-total').value);
+
+            const newScore = {
+                id: 'score-' + Date.now(),
+                title,
+                subjectId,
+                obtained,
+                total,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            appState.scores.unshift(newScore);
+            document.getElementById('form-test').reset();
+            closeModal('modal-test');
+            saveState();
+        }
+
+        // Handle Topic Form Submit
+        function handleTopicSubmit(e) {
+            e.preventDefault();
+            const subjectId = document.getElementById('topic-subject-select').value;
+            const title = document.getElementById('topic-title').value;
+
+            const sub = appState.subjects.find(s => s.id === subjectId);
+            if (sub) {
+                sub.topics.push({
+                    id: 'top-' + Date.now(),
+                    title,
+                    completed: false
+                });
+            }
+
+            document.getElementById('form-topic').reset();
+            closeModal('modal-topic');
+            saveState();
+        }
+
+        function deleteScore(scoreId) {
+            appState.scores = appState.scores.filter(s => s.id !== scoreId);
+            saveState();
+        }
+
+        function renderApp() {
+            // Calculate Metrics
+            let totalTopics = 0;
+            let completedTopics = 0;
+
+            appState.subjects.forEach(sub => {
+                sub.topics.forEach(t => {
+                    totalTopics++;
+                    if (t.completed) completedTopics++;
+                });
+            });
+
+            const masteryPercentage = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+            // Calculate Average Test Score
+            let totalPercentageSum = 0;
+            appState.scores.forEach(s => {
+                totalPercentageSum += (s.obtained / s.total) * 100;
+            });
+            const avgScore = appState.scores.length > 0 ? Math.round(totalPercentageSum / appState.scores.length) : 0;
+
+            // Render Dashboard Metrics
+            document.getElementById('stat-topics').innerText = `${completedTopics} / ${totalTopics}`;
+            document.getElementById('stat-topics-sub').innerText = `${masteryPercentage}% mastery`;
+            document.getElementById('stat-avg-score').innerText = `${avgScore}%`;
+            document.getElementById('stat-tests-count').innerText = appState.scores.length;
+
+            // Render Subject Progress on Dashboard & Topics View
+            let dashSubjectHtml = '';
+            let topicsAccordionHtml = '';
+
+            appState.subjects.forEach(sub => {
+                let subTotal = sub.topics.length;
+                let subCompleted = sub.topics.filter(t => t.completed).length;
+                let subPct = subTotal > 0 ? Math.round((subCompleted / subTotal) * 100) : 0;
+
+                // Dashboard Subject Progress Item
+                dashSubjectHtml += `
+                    <div>
+                        <div class="flex items-center justify-between text-sm mb-1.5">
+                            <span class="font-semibold text-slate-700">${sub.name}</span>
+                            <span class="text-xs font-medium text-slate-500">${subCompleted}/${subTotal} (${subPct}%)</span>
+                        </div>
+                        <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full ${sub.color} rounded-full transition-all duration-500" style="width: ${subPct}%"></div>
+                        </div>
+                    </div>
+                `;
+
+                // Topics Accordion Item
+                let topicListHtml = sub.topics.map(t => `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl transition-colors">
+                        <label class="flex items-center space-x-3 cursor-pointer flex-1">
+                            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTopic('${t.id}')" class="h-4 w-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                            <span class="text-sm font-medium ${t.completed ? 'line-through text-slate-400' : 'text-slate-700'}">${t.title}</span>
+                        </label>
+                        <span class="text-xs px-2.5 py-1 rounded-lg font-medium ${t.completed ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-200/60 text-slate-500'}">
+                            ${t.completed ? 'Completed' : 'Pending'}
+                        </span>
+                    </div>
+                `).join('');
+
+                topicsAccordionHtml += `
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-5 flex items-center justify-between bg-white cursor-pointer select-none">
+                            <div class="flex items-center space-x-4">
+                                <div class="h-10 w-10 rounded-xl ${sub.color} text-white flex items-center justify-center font-bold text-sm shadow-md">
+                                    ${sub.code}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800">${sub.name}</h4>
+                                    <p class="text-xs text-slate-500">${subCompleted} of ${subTotal} topics mastered</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-24 sm:w-32 bg-slate-100 h-2 rounded-full hidden sm:block overflow-hidden">
+                                    <div class="h-full ${sub.color}" style="width: ${subPct}%"></div>
+                                </div>
+                                <span class="text-sm font-bold text-slate-700">${subPct}%</span>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0 space-y-2 border-t border-slate-100 bg-slate-50/50">
+                            <div class="pt-3 space-y-2">
+                                ${topicListHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('dashboard-subject-progress').innerHTML = dashSubjectHtml;
+            document.getElementById('topics-container').innerHTML = topicsAccordionHtml;
+
+            // Render Recent Scores & Full Scores Table
+            let recentScoresHtml = '';
+            let fullScoresHtml = '';
+
+            appState.scores.forEach((score, index) => {
+                const sub = appState.subjects.find(s => s.id === score.subjectId);
+                const subName = sub ? sub.name : 'General';
+                const subColor = sub ? sub.color : 'bg-slate-500';
+                const pct = Math.round((score.obtained / score.total) * 100);
+                
+                let grade = 'A';
+                let gradeColor = 'bg-emerald-50 text-emerald-600';
+                if (pct < 60) { grade = 'F'; gradeColor = 'bg-red-50 text-red-600'; }
+                else if (pct < 70) { grade = 'D'; gradeColor = 'bg-amber-50 text-amber-600'; }
+                else if (pct < 80) { grade = 'C'; gradeColor = 'bg-blue-50 text-blue-600'; }
+                else if (pct < 90) { grade = 'B'; gradeColor = 'bg-indigo-50 text-indigo-600'; }
+
+                const rowHtml = `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3.5 px-4 font-semibold text-slate-800">${score.title}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-flex items-center space-x-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+                                <span class="h-2 w-2 rounded-full ${subColor}"></span>
+                                <span>${subName}</span>
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600 font-medium">${score.obtained} / ${score.total}</td>
+                        <td class="py-3.5 px-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-slate-800">${pct}%</span>
+                                <div class="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                                    <div class="h-full bg-brand-500" style="width: ${pct}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${gradeColor}">${grade}</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <button onclick="deleteScore('${score.id}')" class="text-slate-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+
+                if (index < 5) {
+                    recentScoresHtml += `
+                        <tr class="hover:bg-slate-50/80 transition-colors">
+                            <td class="py-3.5 px-4 font-semibold text-slate-800">${score.title}</td>
+                            <td class="py-3.5 px-4 text-slate-600">${subName}</td>
+                            <td class="py-3.5 px-4 text-slate-600">${score.obtained} / ${score.total}</td>
+                            <td class="py-3.5 px-4"><span class="font-bold text-slate-800">${pct}%</span></td>
+                            <td class="py-3.5 px-4 text-slate-500 text-xs">${score.date}</td>
+                        </tr>
+                    `;
+                }
+                fullScoresHtml += rowHtml;
+            });
+
+            document.getElementById('dashboard-recent-scores').innerHTML = recentScoresHtml || `<tr><td colspan="5" class="py-4 text-center text-slate-400 text-xs">No test scores logged yet.</td></tr>`;
+            document.getElementById('full-scores-table').innerHTML = fullScoresHtml || `<tr><td colspan="6" class="py-6 text-center text-slate-400 text-sm">No test records found. Click 'Log New Test Score' to get started.</td></tr>`;
+
+            // Render Analytics Gauge & Insights
+            const overallReadiness = Math.round((masteryPercentage * 0.6) + (avgScore * 0.4));
+            document.getElementById('analytics-readiness-val').innerText = `${overallReadiness}%`;
+            document.getElementById('analytics-ring').setAttribute('stroke-dasharray', `${overallReadiness}, 100`);
+
+            document.getElementById('insight-strongest').innerText = avgScore > 0 ? `Your average score is ${avgScore}%. High consistency in evaluated subjects.` : `Log test scores to view subject strength analysis.`;
+            document.getElementById('insight-improvement').innerText = masteryPercentage < 60 ? `Focus on completing remaining pending curriculum topics.` : `Exams mastery is solid. Keep taking mock practice tests.`;
+        }
+
+        // Mobile Sidebar Toggle Listeners
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.remove('hidden');
+        });
+        document.getElementById('sidebar-close').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.add('hidden');
+        });
+        document.getElementById('sidebar-backdrop').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.add('hidden');
+        });
+
+        // Initialize App on Load
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>
